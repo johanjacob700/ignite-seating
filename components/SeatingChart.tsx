@@ -320,7 +320,7 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
           if (group.type === 'full') {
             // Horizontal section — spans the full width
             return (
-              <div key={i} className="w-full">
+              <div key={i} className="w-full overflow-x-auto">
                 <SectionChart
                   key={group.section.label}
                   section={group.section.label}
@@ -330,24 +330,23 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
             )
           }
 
-          // Vertical sections — stacked on mobile, side-by-side on sm+ screens
-          const colClass =
-            group.sections.length === 1 ? 'grid-cols-1' :
-            group.sections.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
-            'grid-cols-1 sm:grid-cols-3'
-
+          // Vertical sections — always side by side to preserve the real venue layout.
+          // On mobile this scrolls horizontally, which is intentional so the physical
+          // arrangement isn't confusing to ushers and congregants.
           return (
-            <div
-              key={i}
-              className={`grid gap-4 ${colClass}`}
-            >
-              {group.sections.map(sec => (
-                <SectionChart
-                  key={sec.label}
-                  section={sec.label}
-                  {...sectionProps(sec.label)}
-                />
-              ))}
+            <div key={i} className="overflow-x-auto">
+              <div
+                className="grid gap-4"
+                style={{ gridTemplateColumns: `repeat(${group.sections.length}, minmax(180px, 1fr))` }}
+              >
+                {group.sections.map(sec => (
+                  <SectionChart
+                    key={sec.label}
+                    section={sec.label}
+                    {...sectionProps(sec.label)}
+                  />
+                ))}
+              </div>
             </div>
           )
         })}

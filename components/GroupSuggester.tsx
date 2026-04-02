@@ -344,6 +344,8 @@ export default function GroupSuggester({
   const [groupSize, setGroupSize]       = useState<number>(5)
   const [suggestion, setSuggestion]     = useState<Suggestion | null>(null)
   const [notFound, setNotFound]         = useState(false)
+  // On mobile the panel starts collapsed to save screen space; expands on tap
+  const [expanded, setExpanded]         = useState(false)
 
   const vacantCount = seats.filter(s => s.status === 'vacant').length
 
@@ -369,73 +371,91 @@ export default function GroupSuggester({
   const handleDismiss = () => {
     setSuggestion(null)
     setNotFound(false)
+    setExpanded(false)
     onDismiss()
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-5 py-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-white text-sm font-semibold">Group Seating Finder</h3>
-        <span className="text-zinc-500 text-xs">{vacantCount} vacant seats available</span>
-      </div>
-
-      {/* Input row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="text-zinc-400 text-sm shrink-0">Group size</label>
-        <input
-          type="number"
-          min={1}
-          max={vacantCount}
-          value={groupSize}
-          onChange={e => {
-            setSuggestion(null)
-            onDismiss()
-            setNotFound(false)
-            setGroupSize(Math.max(1, parseInt(e.target.value) || 1))
-          }}
-          className="w-20 bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2 text-white text-sm text-center focus:outline-none focus:border-[#BE1E2D] transition-colors"
-        />
-        <button
-          onClick={handleFind}
-          className="bg-[#BE1E2D] hover:bg-[#9e1826] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors flex-1 sm:flex-none"
-        >
-          Find Seats
-        </button>
-        {hasSuggestion && (
-          <button
-            onClick={handleDismiss}
-            className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
-          >
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* Not enough seats */}
-      {notFound && (
-        <div className="text-amber-400 text-sm">
-          Not enough vacant seats for a group of {groupSize}. Only {vacantCount} available.
+    <div className="bg-zinc-900 border border-zinc-700 rounded-xl overflow-hidden">
+      {/* Header row — always visible, acts as toggle on mobile */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 sm:cursor-default"
+      >
+        <div className="flex items-center gap-3">
+          <h3 className="text-white text-sm font-semibold">Group Seating Finder</h3>
+          {/* Show active suggestion badge when collapsed on mobile */}
+          {hasSuggestion && !expanded && (
+            <span className="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">Active</span>
+          )}
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          <span className="text-zinc-500 text-xs hidden sm:inline">{vacantCount} vacant</span>
+          {/* Chevron — only visible on mobile */}
+          <span className="text-zinc-400 text-sm sm:hidden">{expanded ? '▲' : '▼'}</span>
+        </div>
+      </button>
 
-      {/* Suggestion result */}
-      {suggestion && (
-        <div className="bg-zinc-800 border border-indigo-700/50 rounded-xl px-4 py-4 space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              {/* Strategy badge */}
-              <span className={`text-xs font-semibold uppercase tracking-wide ${STRATEGY_COLORS[suggestion.strategy]}`}>
-                {STRATEGY_LABELS[suggestion.strategy]}
-              </span>
-              {/* Location */}
-              <p className="text-white font-bold text-base mt-0.5">{suggestion.description}</p>
-              <p className="text-zinc-400 text-sm mt-0.5">
-                {suggestion.ids.length} seat{suggestion.ids.length !== 1 ? 's' : ''} · highlighted in purple on the chart
-              </p>
-            </div>
+      {/* Collapsible body — always open on sm+, toggled on mobile */}
+      <div className={`${expanded ? 'block' : 'hidden'} sm:block px-5 pb-4 space-y-4`}>
+        <div className="text-zinc-500 text-xs sm:hidden mb-1">{vacantCount} vacant seats available</div>
+
+        {/* Input row — number stepper + Find button side by side on mobile */}
+        <div className="flex items-center gap-3">
+          <label className="text-zinc-400 text-sm shrink-0">Group size</label>
+          {/* Stepper for easy tap-based increment/decrement on mobile */}
+          <div className="flex items-center bg-zinc-800 border border-zinc-600 rounded-lg overflow-hidden">
+            <button
+              onClick={() => { setSuggestion(null); onDismiss(); setNotFound(false); setGroupSize(n => Math.max(1, n - 1)) }}
+              className="px-3 py-2 text-zinc-300 text-lg font-bold hover:bg-zinc-700 transition-colors active:bg-zinc-600"
+            >−</button>
+            <span className="px-3 text-white text-sm font-semibold min-w-[2rem] text-center">{groupSize}</span>
+            <button
+              onClick={() => { setSuggestion(null); onDismiss(); setNotFound(false); setGroupSize(n => Math.min(vacantCount, n + 1)) }}
+              className="px-3 py-2 text-zinc-300 text-lg font-bold hover:bg-zinc-700 transition-colors active:bg-zinc-600"
+            >+</button>
           </div>
+          <button
+            onClick={handleFind}
+            className="bg-[#BE1E2D] hover:bg-[#9e1826] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors flex-1 sm:flex-none"
+          >
+            Find Seats
+          </button>
+          {hasSuggestion && (
+            <button
+              onClick={handleDismiss}
+              className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
-          {/* Action buttons */}
+        {/* Not enough seats */}
+        {notFound && (
+          <div className="text-amber-400 text-sm">
+            Not enough vacant seats for a group of {groupSize}. Only {vacantCount} available.
+          </div>
+        )}
+
+        {/* Suggestion result */}
+        {suggestion && (
+          <div className="bg-zinc-800 border border-indigo-700/50 rounded-xl px-4 py-4 space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                {/* Strategy badge */}
+                <span className={`text-xs font-semibold uppercase tracking-wide ${STRATEGY_COLORS[suggestion.strategy]}`}>
+                  {STRATEGY_LABELS[suggestion.strategy]}
+                </span>
+                {/* Location */}
+                <p className="text-white font-bold text-base mt-0.5">{suggestion.description}</p>
+                <p className="text-zinc-400 text-sm mt-0.5">
+                  {suggestion.ids.length} seat{suggestion.ids.length !== 1 ? 's' : ''} · highlighted in purple on the chart
+                </p>
+              </div>
+            </div>
+
+            {/* Action buttons */}
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               onClick={() => handleAccept('reserved')}
@@ -457,7 +477,8 @@ export default function GroupSuggester({
             </button>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
