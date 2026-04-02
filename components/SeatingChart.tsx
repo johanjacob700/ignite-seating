@@ -337,27 +337,29 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
           // Width formula per section:
           //   16px left padding + 24px row-label + 6px gap + (cols × 40px seat) +
           //   (cols - 1) × 6px seat-gap + 16px right padding  ≈  52 + cols × 46
+          // Use layoutMeta cols as the authoritative column count for sizing.
+          // Fall back to counting actual seat col_numbers if meta is unavailable.
           const colWidths = group.sections.map(sec => {
-            const maxCol = Math.max(...seatsBySection(sec.label).map(s => s.col_number), 1)
-            return 52 + maxCol * 46
+            const metaCols = layoutMeta.find(m => m.label === sec.label)?.cols ?? 0
+            const seatCols = seatsBySection(sec.label).reduce((m, s) => Math.max(m, s.col_number), 0)
+            const cols = Math.max(metaCols, seatCols, 1)
+            return 52 + cols * 46
           })
           const totalWidth = colWidths.reduce((a, b) => a + b, 0) + (group.sections.length - 1) * 16
 
           return (
-            <div key={i} className="overflow-x-auto">
+            <div key={i} className="overflow-x-auto -mx-4 px-4">
               <div
-                className="grid gap-4"
-                style={{
-                  gridTemplateColumns: colWidths.map(w => `${w}px`).join(' '),
-                  minWidth: `${totalWidth}px`,
-                }}
+                className="flex gap-4"
+                style={{ minWidth: `${totalWidth}px` }}
               >
-                {group.sections.map(sec => (
-                  <SectionChart
-                    key={sec.label}
-                    section={sec.label}
-                    {...sectionProps(sec.label)}
-                  />
+                {group.sections.map((sec, si) => (
+                  <div key={sec.label} style={{ width: `${colWidths[si]}px`, flexShrink: 0 }}>
+                    <SectionChart
+                      section={sec.label}
+                      {...sectionProps(sec.label)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
