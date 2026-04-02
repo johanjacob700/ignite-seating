@@ -331,13 +331,26 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
           }
 
           // Vertical sections — always side by side to preserve the real venue layout.
-          // On mobile this scrolls horizontally, which is intentional so the physical
-          // arrangement isn't confusing to ushers and congregants.
+          // Each section gets a fixed pixel width based on its actual column count so
+          // sections never get squished. On narrow screens this scrolls horizontally.
+          //
+          // Width formula per section:
+          //   16px left padding + 24px row-label + 6px gap + (cols × 40px seat) +
+          //   (cols - 1) × 6px seat-gap + 16px right padding  ≈  52 + cols × 46
+          const colWidths = group.sections.map(sec => {
+            const maxCol = Math.max(...seatsBySection(sec.label).map(s => s.col_number), 1)
+            return 52 + maxCol * 46
+          })
+          const totalWidth = colWidths.reduce((a, b) => a + b, 0) + (group.sections.length - 1) * 16
+
           return (
             <div key={i} className="overflow-x-auto">
               <div
                 className="grid gap-4"
-                style={{ gridTemplateColumns: `repeat(${group.sections.length}, minmax(180px, 1fr))` }}
+                style={{
+                  gridTemplateColumns: colWidths.map(w => `${w}px`).join(' '),
+                  minWidth: `${totalWidth}px`,
+                }}
               >
                 {group.sections.map(sec => (
                   <SectionChart
