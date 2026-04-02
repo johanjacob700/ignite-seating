@@ -380,7 +380,7 @@ export default function GroupSuggester({
       </div>
 
       {/* Input row */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <label className="text-zinc-400 text-sm shrink-0">Group size</label>
         <input
           type="number"
@@ -397,7 +397,7 @@ export default function GroupSuggester({
         />
         <button
           onClick={handleFind}
-          className="bg-[#BE1E2D] hover:bg-[#9e1826] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors"
+          className="bg-[#BE1E2D] hover:bg-[#9e1826] text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors flex-1 sm:flex-none"
         >
           Find Seats
         </button>

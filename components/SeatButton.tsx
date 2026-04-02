@@ -98,7 +98,7 @@ export default function SeatButton({
     return (
       <div
         title={`${seat.label} — ${seat.status}`}
-        className={`w-8 h-8 sm:w-10 sm:h-10 rounded border text-xs font-bold flex items-center justify-center ${styles}`}
+        className={`w-10 h-10 rounded border text-xs font-bold flex items-center justify-center ${styles}`}
       >
         {shortLabel}
       </div>
@@ -131,7 +131,7 @@ export default function SeatButton({
             : `${seat.label} — ${seat.status} (right-click for options)`
         }
         className={`
-          relative w-8 h-8 sm:w-10 sm:h-10
+          relative w-10 h-10
           rounded border text-xs font-bold
           transition-all duration-150 cursor-pointer
           ${baseStyles} ${selectedOverlay}

@@ -90,29 +90,31 @@ export default function AdminPage() {
     <div className="min-h-screen bg-zinc-950">
       {/* Header */}
       <header className="bg-zinc-900 border-b border-zinc-700 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#BE1E2D] flex items-center justify-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#BE1E2D] flex items-center justify-center shrink-0">
               <span className="text-white text-sm">🔥</span>
             </div>
             <div>
-              <span className="text-white font-bold text-lg tracking-wide">IGNITE CHURCH</span>
-              <span className="text-zinc-400 text-sm ml-2">— Admin</span>
+              <span className="text-white font-bold text-base tracking-wide">IGNITE</span>
+              <span className="text-zinc-400 text-sm ml-1.5 hidden sm:inline">Church</span>
+              <span className="text-zinc-500 text-xs ml-2">Admin</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {activeTab === 'seating' && (
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 text-xs sm:text-sm font-medium px-3 py-2 rounded-lg transition-colors"
               >
-                Reset All Seats
+                <span className="hidden sm:inline">Reset All Seats</span>
+                <span className="sm:hidden">Reset</span>
               </button>
             )}
             <button
               onClick={() => setAuthenticated(false)}
-              className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+              className="text-zinc-500 hover:text-zinc-300 text-xs sm:text-sm transition-colors px-1 py-2"
             >
               Log out
             </button>
@@ -137,9 +139,9 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Instruction banner — seating tab only */}
+      {/* Instruction banner — seating tab only, hidden on mobile to save space */}
       {activeTab === 'seating' && (
-        <div className="bg-[#BE1E2D]/10 border-b border-[#BE1E2D]/20">
+        <div className="bg-[#BE1E2D]/10 border-b border-[#BE1E2D]/20 hidden sm:block">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2">
             <p className="text-[#e05060] text-sm">
               <span className="font-bold">Admin mode:</span> Click any seat to toggle it. Use "Select seats" to update multiple at once.
@@ -148,7 +150,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
         {activeTab === 'seating' ? (
           // key={layoutVersion} forces a full remount + data reload when a new layout is applied
           <SeatingChart key={layoutVersion} isAdmin={true} resetTrigger={resetTrigger} />

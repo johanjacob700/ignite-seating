@@ -237,19 +237,19 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
   return (
     <div className="space-y-6">
       {/* Summary bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-zinc-900 border border-zinc-700 rounded-xl px-5 py-3">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:px-5">
         <Legend />
-        <div className="flex items-center gap-4">
-          <div className="flex gap-4 text-sm font-semibold">
+        <div className="flex items-center justify-between sm:justify-end gap-4">
+          <div className="flex gap-3 text-sm font-semibold">
             <span className="text-emerald-400">{vacantCount} open</span>
             <span className="text-red-400">{occupiedCount} taken</span>
-            <span className="text-zinc-400">{totalSeats} total</span>
+            <span className="text-zinc-400 hidden sm:inline">{totalSeats} total</span>
           </div>
 
           {isAdmin && (
             <button
               onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-              className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
+              className={`text-xs font-bold px-3 py-2 rounded-lg border transition-colors ${
                 selectMode
                   ? 'bg-[#BE1E2D] border-[#BE1E2D] text-white'
                   : 'bg-zinc-800 border-zinc-600 text-zinc-300 hover:border-zinc-400'
@@ -320,7 +320,7 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
           if (group.type === 'full') {
             // Horizontal section — spans the full width
             return (
-              <div key={i} className="w-full overflow-x-auto">
+              <div key={i} className="w-full">
                 <SectionChart
                   key={group.section.label}
                   section={group.section.label}
@@ -330,27 +330,24 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
             )
           }
 
-          // Vertical sections — side by side, equal columns
+          // Vertical sections — stacked on mobile, side-by-side on sm+ screens
+          const colClass =
+            group.sections.length === 1 ? 'grid-cols-1' :
+            group.sections.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+            'grid-cols-1 sm:grid-cols-3'
+
           return (
             <div
               key={i}
-              className="overflow-x-auto"
+              className={`grid gap-4 ${colClass}`}
             >
-              <div
-                className="grid gap-6"
-                style={{
-                  gridTemplateColumns: `repeat(${group.sections.length}, 1fr)`,
-                  minWidth: `${group.sections.length * 200}px`,
-                }}
-              >
-                {group.sections.map(sec => (
-                  <SectionChart
-                    key={sec.label}
-                    section={sec.label}
-                    {...sectionProps(sec.label)}
-                  />
-                ))}
-              </div>
+              {group.sections.map(sec => (
+                <SectionChart
+                  key={sec.label}
+                  section={sec.label}
+                  {...sectionProps(sec.label)}
+                />
+              ))}
             </div>
           )
         })}
@@ -361,27 +358,29 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
         ✦ BACK / ENTRANCE ✦
       </div>
 
-      {/* Floating bulk-action bar */}
+      {/* Floating bulk-action bar — anchored to bottom of screen on mobile */}
       {isAdmin && selectMode && selectedIds.size > 0 && !anchorId && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-600 rounded-2xl px-5 py-3 shadow-2xl shadow-black/60">
-            <span className="text-zinc-300 text-sm font-semibold mr-1">
+        <div className="fixed bottom-0 left-0 right-0 sm:bottom-6 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 px-3 pb-3 sm:px-0 sm:pb-0">
+          <div className="flex items-center justify-between gap-2 bg-zinc-900 border border-zinc-600 rounded-2xl px-4 py-3 shadow-2xl shadow-black/60">
+            <span className="text-zinc-300 text-sm font-semibold shrink-0">
               {selectedIds.size} seat{selectedIds.size !== 1 ? 's' : ''}
             </span>
-            <button disabled={bulkLoading} onClick={() => handleBulkAction('reserved')}
-              className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black text-sm font-bold px-4 py-2 rounded-lg transition-colors">
-              Reserve
-            </button>
-            <button disabled={bulkLoading} onClick={() => handleBulkAction('occupied')}
-              className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors">
-              Occupied
-            </button>
-            <button disabled={bulkLoading} onClick={() => handleBulkAction('vacant')}
-              className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors">
-              Vacant
-            </button>
+            <div className="flex gap-2">
+              <button disabled={bulkLoading} onClick={() => handleBulkAction('reserved')}
+                className="bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black text-sm font-bold px-3 py-2 rounded-lg transition-colors">
+                Reserve
+              </button>
+              <button disabled={bulkLoading} onClick={() => handleBulkAction('occupied')}
+                className="bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors">
+                Occupied
+              </button>
+              <button disabled={bulkLoading} onClick={() => handleBulkAction('vacant')}
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-bold px-3 py-2 rounded-lg transition-colors">
+                Vacant
+              </button>
+            </div>
             <button onClick={exitSelectMode}
-              className="text-zinc-400 hover:text-zinc-200 text-sm px-2 py-2 transition-colors">
+              className="text-zinc-400 hover:text-zinc-200 text-sm font-medium transition-colors shrink-0">
               Cancel
             </button>
           </div>
