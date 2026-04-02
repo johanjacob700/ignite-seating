@@ -1,65 +1,65 @@
-import Image from "next/image";
+// Public seating view — read-only, live-updating.
+// Anyone with the link can see available seats in real time.
+// No login required.
 
-export default function Home() {
+import SeatingChart from '@/components/SeatingChart'
+import Link from 'next/link'
+
+export default function PublicPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-zinc-950">
+      {/* Header */}
+      <header className="bg-zinc-900 border-b border-zinc-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Flame icon matching Ignite brand */}
+            <div className="w-9 h-9 rounded-full bg-[#BE1E2D] flex items-center justify-center shadow-lg shadow-red-900/40">
+              <span className="text-white text-base">🔥</span>
+            </div>
+            <div>
+              <div className="text-white font-extrabold text-lg tracking-widest uppercase">
+                Ignite Church
+              </div>
+              <div className="text-zinc-400 text-xs tracking-wide">Newark, NJ — Live Seating</div>
+            </div>
+          </div>
+
+          {/* Link to admin (ushers only) */}
+          <Link
+            href="/admin"
+            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+          >
+            Usher Admin →
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero tagline */}
+      <div className="bg-gradient-to-b from-zinc-900 to-zinc-950 border-b border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-wide">
+            Sunday Seating
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-zinc-400 mt-1 text-sm sm:text-base">
+            Find your seat — this chart updates live as ushers check people in.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </div>
+
+      {/* Live seating chart */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <SeatingChart isAdmin={false} />
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-800 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-zinc-600 text-xs">
+            © {new Date().getFullYear()} Ignite Church Newark · 1100 McCarter Hwy, Newark, NJ 07102
+          </p>
+          <p className="text-zinc-600 text-xs">Sundays at 11am · Upper Level</p>
+        </div>
+      </footer>
     </div>
-  );
+  )
 }
