@@ -143,6 +143,8 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
   const [showHistory, setShowHistory] = useState(false)
   const [history, setHistory]       = useState<AttendanceRecord[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
+  // Free-text note for the service (e.g. "Easter Sunday", "Guest speaker")
+  const [serviceNote, setServiceNote] = useState('')
 
   // Analysis result built when the modal opens
   const [analysis, setAnalysis]     = useState<{
@@ -156,6 +158,7 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
     setLoading(true)
     setOpen(true)
     setSaved(false)
+    setServiceNote('')
 
     const { data: seats } = await supabase.from('seats').select('*')
     if (!seats) { setLoading(false); return }
@@ -185,6 +188,7 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
       efficiency_score:  result.score,
       section_breakdown: result.sectionStats,
       efficiency_notes:  result.notes,
+      service_note:      serviceNote.trim() || null,
     })
 
     setSaving(false)
@@ -246,6 +250,19 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
                       value={analysis.serviceDate}
                       onChange={e => setAnalysis({ ...analysis, serviceDate: e.target.value })}
                       className="bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-[#BE1E2D]"
+                    />
+                  </div>
+
+                  {/* Service note */}
+                  <div className="space-y-1.5">
+                    <label className="text-zinc-400 text-sm">Service note <span className="text-zinc-600">(optional)</span></label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Easter Sunday, Guest speaker, Youth Sunday…"
+                      value={serviceNote}
+                      onChange={e => setServiceNote(e.target.value)}
+                      maxLength={100}
+                      className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-[#BE1E2D] transition-colors"
                     />
                   </div>
 
@@ -322,7 +339,10 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
                 <div className="text-center py-6 space-y-3">
                   <div className="text-4xl">✅</div>
                   <p className="text-white font-bold text-lg">Attendance saved!</p>
-                  <p className="text-zinc-400 text-sm">Record stored for {analysis?.serviceDate}.</p>
+                  <p className="text-zinc-400 text-sm">
+                    Record stored for {analysis?.serviceDate}
+                    {serviceNote.trim() ? ` · ${serviceNote.trim()}` : ''}.
+                  </p>
                   <button
                     onClick={() => setOpen(false)}
                     className="mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium px-6 py-2.5 rounded-lg transition-colors"
@@ -354,11 +374,19 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
               )}
               {!historyLoading && history.map(rec => (
                 <div key={rec.id} className="bg-zinc-800 rounded-xl px-4 py-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white font-semibold text-sm">
-                      {new Date(rec.service_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </span>
-                    <span className={`text-sm font-bold ${scoreColor(rec.efficiency_score)}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-white font-semibold text-sm block">
+                        {new Date(rec.service_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                      {/* Service note badge */}
+                      {(rec as AttendanceRecord & { service_note?: string }).service_note && (
+                        <span className="inline-block mt-1 bg-[#BE1E2D]/20 text-[#e05060] text-xs font-semibold px-2 py-0.5 rounded-full">
+                          {(rec as AttendanceRecord & { service_note?: string }).service_note}
+                        </span>
+                      )}
+                    </div>
+                    <span className={`text-sm font-bold shrink-0 ${scoreColor(rec.efficiency_score)}`}>
                       {rec.efficiency_score}/100
                     </span>
                   </div>

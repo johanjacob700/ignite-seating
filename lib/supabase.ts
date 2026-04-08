@@ -65,5 +65,6 @@ export interface AttendanceRecord {
   efficiency_score: number      // 0–100
   section_breakdown: SectionStat[]
   efficiency_notes: string[]    // human-readable recommendations
+  service_note: string | null   // optional usher note e.g. "Easter Sunday"
   created_at: string
 }
