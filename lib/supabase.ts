@@ -43,3 +43,27 @@ export interface Layout {
   config: SectionConfig[]
   created_at: string
 }
+
+// Per-section stats stored inside an attendance record
+export interface SectionStat {
+  label: string
+  total: number
+  occupied: number
+  reserved: number
+  vacant: number
+  rate: number   // 0–1 occupancy fraction
+}
+
+// One Sunday's attendance record from the `attendance` table
+export interface AttendanceRecord {
+  id: number
+  service_date: string          // ISO date e.g. "2026-04-06"
+  total_occupied: number        // seats marked occupied
+  total_reserved: number        // seats marked reserved
+  total_vacant: number
+  total_seats: number
+  efficiency_score: number      // 0–100
+  section_breakdown: SectionStat[]
+  efficiency_notes: string[]    // human-readable recommendations
+  created_at: string
+}

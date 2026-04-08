@@ -8,6 +8,8 @@
 import { useState } from 'react'
 import SeatingChart from '@/components/SeatingChart'
 import LayoutEditor from '@/components/LayoutEditor'
+import AttendanceSubmit from '@/components/AttendanceSubmit'
+import { SectionConfig } from '@/lib/supabase'
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'ignite2024'
 
@@ -18,6 +20,7 @@ export default function AdminPage() {
   const [password, setPassword]                 = useState('')
   const [authError, setAuthError]               = useState(false)
   const [resetTrigger, setResetTrigger]         = useState(0)
+  const [layoutMeta, setLayoutMeta]             = useState<SectionConfig[]>([])
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [activeTab, setActiveTab]               = useState<Tab>('seating')
   // Incremented when the layout editor applies a new layout, forcing SeatingChart to reload
@@ -152,8 +155,17 @@ export default function AdminPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
         {activeTab === 'seating' ? (
-          // key={layoutVersion} forces a full remount + data reload when a new layout is applied
-          <SeatingChart key={layoutVersion} isAdmin={true} resetTrigger={resetTrigger} />
+          <div className="space-y-5">
+            {/* Submit attendance + history — shown at the top of the seating tab */}
+            <AttendanceSubmit layoutMeta={layoutMeta} />
+            {/* key={layoutVersion} forces a full remount + data reload when a new layout is applied */}
+            <SeatingChart
+              key={layoutVersion}
+              isAdmin={true}
+              resetTrigger={resetTrigger}
+              onLayoutLoaded={setLayoutMeta}
+            />
+          </div>
         ) : (
           <div>
             <div className="mb-6">

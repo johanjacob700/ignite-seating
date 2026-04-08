@@ -41,6 +41,8 @@ import Legend from './Legend'
 interface SeatingChartProps {
   isAdmin: boolean
   resetTrigger?: number
+  // Optional callback so parent components can receive the loaded layout config
+  onLayoutLoaded?: (meta: SectionConfig[]) => void
 }
 
 const TOGGLE_CYCLE: Record<SeatStatus, SeatStatus> = {
@@ -59,7 +61,7 @@ function seatSortKey(s: Seat): string {
   )
 }
 
-export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProps) {
+export default function SeatingChart({ isAdmin, resetTrigger, onLayoutLoaded }: SeatingChartProps) {
   const [seats, setSeats]             = useState<Seat[]>([])
   const [layoutMeta, setLayoutMeta]   = useState<SectionConfig[]>([])
   const [loading, setLoading]         = useState(true)
@@ -98,7 +100,9 @@ export default function SeatingChart({ isAdmin, resetTrigger }: SeatingChartProp
     else                   { setSeats(seatsResult.data as Seat[]) }
 
     if (metaResult.data?.config) {
-      setLayoutMeta(metaResult.data.config as SectionConfig[])
+      const meta = metaResult.data.config as SectionConfig[]
+      setLayoutMeta(meta)
+      onLayoutLoaded?.(meta)
     }
 
     setLoading(false)
