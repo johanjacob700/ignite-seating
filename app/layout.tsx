@@ -24,6 +24,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geist.variable} h-full antialiased`}>
+      <head>
+        {/* Apply saved theme before first paint to avoid a flash of wrong theme */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            if (localStorage.getItem('theme') === 'light')
+              document.documentElement.classList.add('light')
+          } catch(e) {}
+        `}} />
+      </head>
       <body className="min-h-full bg-zinc-950 text-white" suppressHydrationWarning>{children}</body>
     </html>
   );

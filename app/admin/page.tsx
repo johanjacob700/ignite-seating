@@ -10,6 +10,7 @@ import SeatingChart from '@/components/SeatingChart'
 import LayoutEditor from '@/components/LayoutEditor'
 import AttendanceSubmit from '@/components/AttendanceSubmit'
 import ServiceTimer from '@/components/ServiceTimer'
+import ThemeToggle from '@/components/ThemeToggle'
 import { SectionConfig } from '@/lib/supabase'
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'ignite2024'
@@ -107,6 +108,7 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {activeTab === 'seating' && (
               <button
                 onClick={() => setShowResetConfirm(true)}

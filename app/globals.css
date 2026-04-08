@@ -4,23 +4,46 @@
 :root {
   --ignite-red: #BE1E2D;
   --ignite-red-dark: #9e1826;
-  --background: #09090b;   /* zinc-950 */
-  --foreground: #fafafa;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
 }
 
 /* Smooth scrolling for the whole page */
 html {
   scroll-behavior: smooth;
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────────
+   Flip the zinc scale so the default dark UI becomes light.
+   Every bg-zinc-*, text-zinc-*, border-zinc-* utility automatically picks up
+   these overrides — no component changes needed.
+   --color-white is remapped to near-black so text-white headings stay
+   readable on light backgrounds. Seat buttons keep their status colors
+   (emerald/red/amber) which are unaffected by zinc overrides.
+*/
+html.light {
+  color-scheme: light;
+  --color-white:     #18181b;   /* zinc-900  — headings / primary text */
+  --color-zinc-950:  #fafafa;   /* page background */
+  --color-zinc-900:  #f4f4f5;   /* card / header background */
+  --color-zinc-800:  #e4e4e7;   /* input / secondary card background */
+  --color-zinc-700:  #d4d4d8;   /* borders */
+  --color-zinc-600:  #a1a1aa;   /* subtle / very muted text */
+  --color-zinc-500:  #71717a;   /* muted text — same in both themes */
+  --color-zinc-400:  #52525b;   /* secondary text */
+  --color-zinc-300:  #3f3f46;   /* body text */
+  --color-zinc-200:  #27272a;
+  --color-zinc-100:  #18181b;
+  --color-zinc-50:   #09090b;
+}
+
+/* Smooth transition when toggling between themes */
+*, *::before, *::after {
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
 }

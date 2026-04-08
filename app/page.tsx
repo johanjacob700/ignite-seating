@@ -3,6 +3,7 @@
 // No login required.
 
 import SeatingChart from '@/components/SeatingChart'
+import ThemeToggle from '@/components/ThemeToggle'
 import Link from 'next/link'
 
 export default function PublicPage() {
@@ -24,13 +25,15 @@ export default function PublicPage() {
             </div>
           </div>
 
-          {/* Link to admin (ushers only) */}
-          <Link
-            href="/admin"
-            className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
-          >
-            Usher Admin →
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/admin"
+              className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+            >
+              Usher Admin →
+            </Link>
+          </div>
         </div>
       </header>
 
