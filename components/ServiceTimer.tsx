@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase, SectionConfig, Seat } from '@/lib/supabase'
+import { analyzeEfficiency, countByStatus } from '@/lib/seating-analysis'
 
 // ── Schedule constants ────────────────────────────────────────────────────────
 const START_H = 11   // 11:00am ET
@@ -92,44 +93,28 @@ function fmtCountdown(mins: number, secs: number): string {
   return `${secs} sec`
 }
 
-// ── Attendance auto-save helper ───────────────────────────────────────────────
-// Fetches seats + layout, computes basic stats, saves to attendance table.
-// Returns false if a record for today already exists (skips duplicate save).
+// Fetches seats and checks for an existing record in parallel, then saves.
+// Returns false if a record for today already exists.
 async function autoSaveAttendance(dateStr: string, layoutMeta: SectionConfig[]): Promise<boolean> {
-  // Check for existing record today
-  const { data: existing } = await supabase
-    .from('attendance')
-    .select('id')
-    .eq('service_date', dateStr)
-    .maybeSingle()
-  if (existing) return false  // already saved by usher manually
+  const [{ data: existing }, { data: rawSeats }] = await Promise.all([
+    supabase.from('attendance').select('id').eq('service_date', dateStr).maybeSingle(),
+    supabase.from('seats').select('*'),
+  ])
+  if (existing || !rawSeats || rawSeats.length === 0) return false
 
-  const { data: seats } = await supabase.from('seats').select('*')
-  if (!seats || seats.length === 0) return false
-
-  const s = seats as Seat[]
-  const occupied = s.filter(x => x.status === 'occupied').length
-  const reserved = s.filter(x => x.status === 'reserved').length
-  const vacant   = s.filter(x => x.status === 'vacant').length
-
-  // Build minimal section breakdown
-  const sectionBreakdown = layoutMeta.map(sec => {
-    const ss = s.filter(x => x.section === sec.label)
-    const occ = ss.filter(x => x.status === 'occupied').length
-    const res = ss.filter(x => x.status === 'reserved').length
-    const vac = ss.filter(x => x.status === 'vacant').length
-    return { label: sec.label, total: ss.length, occupied: occ, reserved: res, vacant: vac, rate: (occ + res) / Math.max(ss.length, 1) }
-  })
+  const seats = rawSeats as Seat[]
+  const { occupied, reserved, vacant } = countByStatus(seats)
+  const { score, sectionStats, notes } = analyzeEfficiency(seats, layoutMeta)
 
   await supabase.from('attendance').insert({
     service_date:      dateStr,
     total_occupied:    occupied,
     total_reserved:    reserved,
     total_vacant:      vacant,
-    total_seats:       s.length,
-    efficiency_score:  0,  // auto-save doesn't compute full efficiency
-    section_breakdown: sectionBreakdown,
-    efficiency_notes:  ['Auto-saved at 1:00pm ET — attendance was not submitted manually.'],
+    total_seats:       seats.length,
+    efficiency_score:  score,
+    section_breakdown: sectionStats,
+    efficiency_notes:  ['Auto-saved at 2:00pm ET — attendance was not submitted manually.', ...notes],
   })
   return true
 }
@@ -190,28 +175,35 @@ export default function ServiceTimer({ layoutMeta }: Props) {
     }
   }, [layoutMeta])
 
-  // ── 1-second tick ──────────────────────────────────────────────────────────
+  // 1-second tick — but only triggers a re-render when the displayed value changes.
+  // During reminder windows seconds are shown so every tick matters; during the
+  // long "in-progress" window and on non-Sundays only minute-level updates are needed.
   useEffect(() => {
     const tick = setInterval(() => {
       const now   = getETTime()
       const phase = getPhase(now)
-      setEt(now)
 
-      // Reminder: 5 min before service starts
+      const needsSecondGranularity =
+        phase === 'remind-start' ||
+        phase === 'remind-end'   ||
+        (phase === 'before' && START_TOTAL - now.totalMins <= 1)
+
+      if (needsSecondGranularity || now.seconds === 0) {
+        setEt(now)
+      }
+
       if (phase === 'remind-start' && !firedRemindStart.current) {
         firedRemindStart.current = true
         setBanner({ type: 'start', message: 'Service starts in 5 minutes — make sure ushers are ready and seat assignment is active.' })
         sendNotification('Service Starting Soon', 'Ignite Church service starts in 5 minutes. Open the seating chart to begin.')
       }
 
-      // Reminder: 5 min before service ends
       if (phase === 'remind-end' && !firedRemindEnd.current) {
         firedRemindEnd.current = true
-        setBanner({ type: 'end', message: 'Service ends in 5 minutes — please submit attendance before 1:00pm ET.' })
+        setBanner({ type: 'end', message: 'Service ends in 5 minutes — please submit attendance before 2:00pm ET.' })
         sendNotification('Submit Attendance', 'Ignite Church service ends in 5 minutes. Don\'t forget to submit attendance.')
       }
 
-      // Auto-save at 1:00pm ET
       if (phase === 'ended') {
         handleAutoSave(now.dateStr)
       }
@@ -270,11 +262,12 @@ export default function ServiceTimer({ layoutMeta }: Props) {
     statusDot         = 'bg-zinc-600'
   }
 
-  // ── Banner colour ─────────────────────────────────────────────────────────
-  const bannerStyle =
-    banner?.type === 'start'      ? 'bg-amber-500/15 border-amber-500/40 text-amber-300' :
-    banner?.type === 'end'        ? 'bg-[#BE1E2D]/15 border-[#BE1E2D]/40 text-red-300'  :
-    banner?.type === 'auto-saved' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : ''
+  const BANNER_STYLES: Record<Banner['type'], string> = {
+    'start':      'bg-amber-500/15 border-amber-500/40 text-amber-300',
+    'end':        'bg-[#BE1E2D]/15 border-[#BE1E2D]/40 text-red-300',
+    'auto-saved': 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300',
+  }
+  const bannerStyle = banner ? BANNER_STYLES[banner.type] : ''
 
   return (
     <div className="space-y-3">
