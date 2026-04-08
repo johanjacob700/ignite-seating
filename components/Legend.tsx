@@ -1,20 +1,21 @@
-// Legend shows the color key for seat statuses at the top of the page.
+// Legend — compact pill badges showing the three seat status colours.
 
 export default function Legend() {
   return (
-    <div className="flex flex-wrap items-center gap-4 text-sm">
-      <div className="flex items-center gap-2">
-        <div className="w-5 h-5 rounded bg-emerald-500 border border-emerald-400" />
-        <span className="text-zinc-300">Vacant</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="w-5 h-5 rounded bg-red-600 border border-red-500" />
-        <span className="text-zinc-300">Occupied</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="w-5 h-5 rounded bg-amber-500 border border-amber-400" />
-        <span className="text-zinc-300">Reserved</span>
-      </div>
+    <div className="flex flex-wrap items-center gap-2">
+      {[
+        { dot: 'bg-emerald-400', label: 'Available' },
+        { dot: 'bg-red-500',     label: 'Taken' },
+        { dot: 'bg-amber-400',   label: 'Reserved' },
+      ].map(({ dot, label }) => (
+        <span
+          key={label}
+          className="inline-flex items-center gap-1.5 bg-zinc-800 border border-zinc-700 rounded-full px-2.5 py-1 text-xs text-zinc-300 font-medium"
+        >
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
+          {label}
+        </span>
+      ))}
     </div>
   )
 }

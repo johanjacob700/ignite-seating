@@ -327,9 +327,9 @@ function findBestSeats(
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const STRATEGY_LABELS: Record<Suggestion['strategy'], string> = {
-  'together':    'Seats together in one row',
-  'spill':       'Group spans two rows in the same section',
-  'last-resort': 'Best available — group is too large to fit in one section',
+  'together':    'All together in one row',
+  'spill':       'Together across two rows, same section',
+  'last-resort': 'Best available — group spans multiple sections',
 }
 
 const STRATEGY_COLORS: Record<Suggestion['strategy'], string> = {
