@@ -17,7 +17,7 @@ import { supabase, SectionConfig, Seat } from '@/lib/supabase'
 // ── Schedule constants ────────────────────────────────────────────────────────
 const START_H = 11   // 11:00am ET
 const START_M = 0
-const END_H   = 13   //  1:00pm ET
+const END_H   = 14   //  2:00pm ET
 const END_M   = 0
 const REMIND_MINS = 5  // fire reminder this many minutes before each event
 
