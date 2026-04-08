@@ -9,6 +9,7 @@ import { useState } from 'react'
 import SeatingChart from '@/components/SeatingChart'
 import LayoutEditor from '@/components/LayoutEditor'
 import AttendanceSubmit from '@/components/AttendanceSubmit'
+import ServiceTimer from '@/components/ServiceTimer'
 import { SectionConfig } from '@/lib/supabase'
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? 'ignite2024'
@@ -156,7 +157,9 @@ export default function AdminPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
         {activeTab === 'seating' ? (
           <div className="space-y-5">
-            {/* Submit attendance + history — shown at the top of the seating tab */}
+            {/* Service countdown timer + reminder banners */}
+            <ServiceTimer layoutMeta={layoutMeta} />
+            {/* Submit attendance + history */}
             <AttendanceSubmit layoutMeta={layoutMeta} />
             {/* key={layoutVersion} forces a full remount + data reload when a new layout is applied */}
             <SeatingChart
