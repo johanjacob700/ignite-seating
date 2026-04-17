@@ -205,7 +205,8 @@ function findBestSeats(
     description: string
     depth: number
     startRow: number
-    hasSingle: boolean  // true when the last row receives only 1 seat — less ideal but valid
+    hasSingle: boolean    // true when the last row receives only 1 seat — less ideal but valid
+    firstRowCount: number // seats placed in the anchor row — higher = group is more together
   }
   const spillResults: SpillResult[] = []
 
@@ -274,17 +275,22 @@ function findBestSeats(
       if (allPicked.length < groupSize) continue
 
       const uniqueRows = [...new Set(allPicked.map(s => s.row_number))]
-      const rowLabel = uniqueRows.length === 1
-        ? `Row ${uniqueRows[0]}`
-        : `Rows ${uniqueRows[0]}–${uniqueRows[uniqueRows.length - 1]}`
-      const splitLabel = trimmed.map(r => r.length).join('+')
+      // Human-readable placement description.
+      // Single row: "Row 2 · Section B"
+      // Multi-row:  "Section B · 5 in row 2 + 2 behind in row 3"
+      const description = uniqueRows.length === 1
+        ? `Row ${uniqueRows[0]} · Section ${section}`
+        : `Section ${section} · ${trimmed.map((r, idx) =>
+            `${r.length} in row ${uniqueRows[idx]}`
+          ).join(', overflow ')}` // e.g. "Section B · 5 in row 2, overflow 2 in row 3"
 
       const result: SpillResult = {
         ids: allPicked.map(s => s.id),
-        description: `${rowLabel} · Section ${section} (${splitLabel} split)`,
+        description,
         depth: gd(secSeats[0]),
         startRow: rows[i],
         hasSingle,
+        firstRowCount: trimmed[0]?.length ?? 0,
       }
 
       // Keep the earliest clean result; fall back to earliest single result
@@ -303,9 +309,16 @@ function findBestSeats(
   }
 
   if (spillResults.length > 0) {
-    // Rank: clean splits (hasSingle=false) before single splits, then by depth, then by start row
+    // Rank priority:
+    //   1. Clean split (no row gets 1 person) over a single-seat row
+    //   2. Most seats in the anchor row first — keeps the largest chunk of the group together.
+    //      e.g. for a group of 7, Section B fitting 5 in one row beats Section A fitting only 3,
+    //      even if A is closer to the stage.
+    //   3. Closer to stage (lower depth) as tiebreaker
+    //   4. Earlier starting row within the section
     spillResults.sort((a, b) => {
       if (a.hasSingle !== b.hasSingle) return a.hasSingle ? 1 : -1
+      if (b.firstRowCount !== a.firstRowCount) return b.firstRowCount - a.firstRowCount
       if (a.depth !== b.depth) return a.depth - b.depth
       return a.startRow - b.startRow
     })
