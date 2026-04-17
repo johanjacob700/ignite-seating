@@ -77,6 +77,25 @@ export default function SeatingChart({ isAdmin, resetTrigger, onLayoutLoaded }: 
   // suggestedIds holds seats highlighted purple from the group finder
   const [suggestedIds, setSuggestedIds] = useState<Set<string>>(new Set())
 
+  // Which sections contain at least one suggested seat — used to highlight and
+  // scroll to the recommended section on mobile when a new suggestion is made
+  const suggestedSections = useMemo(
+    () => new Set(seats.filter(s => suggestedIds.has(s.id)).map(s => s.section)),
+    [seats, suggestedIds],
+  )
+
+  // When a suggestion is made, scroll the first recommended section into view.
+  // scrollIntoView handles both the page's vertical scroll AND any horizontal
+  // overflow scroll on the section row — so the right section pops into frame.
+  useEffect(() => {
+    if (suggestedIds.size === 0) return
+    const firstSeat = seats.find(s => suggestedIds.has(s.id))
+    if (!firstSeat) return
+    document
+      .getElementById(`section-${firstSeat.section}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [suggestedIds])
+
   const exitSelectMode = useCallback(() => {
     setSelectMode(false)
     setSelectedIds(new Set())
@@ -324,10 +343,11 @@ export default function SeatingChart({ isAdmin, resetTrigger, onLayoutLoaded }: 
           if (group.type === 'full') {
             // Horizontal section — spans the full width
             return (
-              <div key={i} className="w-full overflow-x-auto">
+              <div key={i} id={`section-${group.section.label}`} className="w-full overflow-x-auto">
                 <SectionChart
                   key={group.section.label}
                   section={group.section.label}
+                  isHighlighted={suggestedSections.has(group.section.label)}
                   {...sectionProps(group.section.label)}
                 />
               </div>
@@ -358,9 +378,10 @@ export default function SeatingChart({ isAdmin, resetTrigger, onLayoutLoaded }: 
                 style={{ minWidth: `${totalWidth}px` }}
               >
                 {group.sections.map((sec, si) => (
-                  <div key={sec.label} style={{ width: `${colWidths[si]}px`, flexShrink: 0 }}>
+                  <div key={sec.label} id={`section-${sec.label}`} style={{ width: `${colWidths[si]}px`, flexShrink: 0 }}>
                     <SectionChart
                       section={sec.label}
+                      isHighlighted={suggestedSections.has(sec.label)}
                       {...sectionProps(sec.label)}
                     />
                   </div>

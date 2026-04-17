@@ -11,6 +11,7 @@ interface SectionChartProps {
   section: string
   seats: Seat[]
   isAdmin: boolean
+  isHighlighted?: boolean  // true when this section contains group-finder suggested seats
   selectMode?: boolean
   selectedIds?: Set<string>
   anchorId?: string | null
@@ -21,7 +22,7 @@ interface SectionChartProps {
 }
 
 export default function SectionChart({
-  section, seats, isAdmin,
+  section, seats, isAdmin, isHighlighted,
   selectMode, selectedIds, anchorId, suggestedIds,
   onToggle, onSetStatus, onSelectToggle,
 }: SectionChartProps) {
@@ -34,8 +35,14 @@ export default function SectionChart({
   const taken    = occupied + reserved
   const fillPct  = total > 0 ? Math.round((taken / total) * 100) : 0
 
+  // A purple ring on the card border draws the eye to the recommended section
+  // after the group finder scrolls it into view on mobile.
+  const cardClass = isHighlighted
+    ? 'bg-zinc-900 border-2 border-purple-500/70 rounded-2xl overflow-hidden shadow-lg shadow-purple-900/30'
+    : 'bg-zinc-900 border border-zinc-700/60 rounded-2xl overflow-hidden'
+
   return (
-    <div className="bg-zinc-900 border border-zinc-700/60 rounded-2xl overflow-hidden">
+    <div className={cardClass}>
       {/* Header */}
       <div className="px-4 pt-4 pb-3 border-b border-zinc-800">
         <div className="flex items-center justify-between gap-3">
