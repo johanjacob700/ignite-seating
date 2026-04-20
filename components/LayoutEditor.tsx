@@ -56,6 +56,34 @@ export default function LayoutEditor({ onLayoutApplied }: Props) {
   const [showFav, setShowFav]           = useState(false)
   const [status, setStatus]             = useState<{ ok: boolean; msg: string } | null>(null)
 
+  // ── Draft inputs for rows/cols ────────────────────────────────────────────
+  // Stores the raw string the user is currently typing for a given field so we
+  // don't snap to the validated integer on every keystroke. Keys are "{idx}-rows"
+  // or "{idx}-cols". The draft is committed (validated + clamped) on blur.
+  const [rawInputs, setRawInputs] = useState<Record<string, string>>({})
+
+  const getDisplayValue = (idx: number, field: 'rows' | 'cols'): string => {
+    const key = `${idx}-${field}`
+    return key in rawInputs ? rawInputs[key] : String(sections[idx][field])
+  }
+
+  const onNumberChange = (idx: number, field: 'rows' | 'cols', raw: string) => {
+    // Allow digits and empty string while the user is mid-edit; store as draft
+    if (/^\d*$/.test(raw)) {
+      setRawInputs(prev => ({ ...prev, [`${idx}-${field}`]: raw }))
+    }
+  }
+
+  const onNumberBlur = (idx: number, field: 'rows' | 'cols') => {
+    const key = `${idx}-${field}`
+    const raw = rawInputs[key] ?? String(sections[idx][field])
+    const max = field === 'cols' ? 20 : 30
+    const num = Math.max(1, Math.min(max, parseInt(raw) || 1))
+    setSections(prev => prev.map((s, i) => i !== idx ? s : { ...s, [field]: num }))
+    // Remove the draft so the input reverts to displaying the validated number
+    setRawInputs(prev => { const next = { ...prev }; delete next[key]; return next })
+  }
+
   // ── Drag-and-drop state ───────────────────────────────────────────────────
   // dragIdx: the index of the card being dragged
   // overIdx: the index of the card currently being hovered over during drag
@@ -297,9 +325,10 @@ export default function LayoutEditor({ onLayoutApplied }: Props) {
                 <div className="flex items-center gap-1.5">
                   <label className="text-zinc-500 text-xs">Rows</label>
                   <input
-                    type="number" min={1} max={30}
-                    value={sec.rows}
-                    onChange={e => updateSection(idx, 'rows', e.target.value)}
+                    type="text" inputMode="numeric"
+                    value={getDisplayValue(idx, 'rows')}
+                    onChange={e => onNumberChange(idx, 'rows', e.target.value)}
+                    onBlur={() => onNumberBlur(idx, 'rows')}
                     className="w-14 bg-zinc-800 border border-zinc-600 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-[#BE1E2D] transition-colors"
                   />
                 </div>
@@ -308,9 +337,10 @@ export default function LayoutEditor({ onLayoutApplied }: Props) {
                 <div className="flex items-center gap-1.5">
                   <label className="text-zinc-500 text-xs">Cols</label>
                   <input
-                    type="number" min={1} max={20}
-                    value={sec.cols}
-                    onChange={e => updateSection(idx, 'cols', e.target.value)}
+                    type="text" inputMode="numeric"
+                    value={getDisplayValue(idx, 'cols')}
+                    onChange={e => onNumberChange(idx, 'cols', e.target.value)}
+                    onBlur={() => onNumberBlur(idx, 'cols')}
                     className="w-14 bg-zinc-800 border border-zinc-600 rounded-lg px-2 py-1.5 text-white text-sm text-center focus:outline-none focus:border-[#BE1E2D] transition-colors"
                   />
                 </div>
