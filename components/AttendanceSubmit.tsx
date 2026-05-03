@@ -301,65 +301,80 @@ export default function AttendanceSubmit({ layoutMeta }: Props) {
                 const fillPct = Math.round(inUse / Math.max(rec.total_seats, 1) * 100)
 
                 return (
-                  <div key={rec.id} className="bg-zinc-800 rounded-xl overflow-hidden">
-                    {/* Summary row */}
-                    <div className="px-4 py-3 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="text-white font-semibold text-sm block">
-                            {new Date(rec.service_date + 'T12:00:00').toLocaleDateString('en-US', {
-                              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-                            })}
+                  <div key={rec.id} className="bg-zinc-800 rounded-xl overflow-hidden border border-zinc-700/50">
+
+                    {/* Tappable header — tap anywhere to expand/collapse */}
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : rec.id)}
+                      className="w-full text-left px-4 py-3.5 flex items-center gap-3 hover:bg-zinc-700/40 transition-colors active:bg-zinc-700/60"
+                    >
+                      {/* Date + note */}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <span className="text-white font-semibold text-sm block truncate">
+                          {new Date(rec.service_date + 'T12:00:00').toLocaleDateString('en-US', {
+                            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                          })}
+                        </span>
+                        {rec.service_note && (
+                          <span className="inline-block bg-[#BE1E2D]/20 text-[#e05060] text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {rec.service_note}
                           </span>
-                          {rec.service_note && (
-                            <span className="inline-block mt-1 bg-[#BE1E2D]/20 text-[#e05060] text-xs font-semibold px-2 py-0.5 rounded-full">
-                              {rec.service_note}
-                            </span>
-                          )}
-                        </div>
-                        {/* Occupancy % pill */}
-                        <span className="shrink-0 bg-zinc-700 text-zinc-200 text-xs font-bold px-2.5 py-1 rounded-full">
+                        )}
+                      </div>
+
+                      {/* % full pill + chevron */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="bg-zinc-700 text-zinc-200 text-xs font-bold px-2.5 py-1 rounded-full">
                           {fillPct}% full
                         </span>
+                        <span className={`text-zinc-500 text-xs transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                          ▼
+                        </span>
                       </div>
+                    </button>
 
-                      {/* Seat counts */}
-                      <div className="flex gap-4 text-xs">
-                        <span className="text-red-400">{rec.total_occupied} occupied</span>
-                        <span className="text-amber-400">{rec.total_reserved} reserved</span>
-                        <span className="text-zinc-500">{rec.total_vacant} vacant</span>
-                        <span className="text-zinc-600">{rec.total_seats} total</span>
-                      </div>
+                    {/* Expanded detail */}
+                    {isExpanded && (
+                      <div className="border-t border-zinc-700/60 px-4 pb-4 space-y-4 pt-4">
 
-                      {/* Expand/collapse snapshot button */}
-                      {rec.seat_snapshot && rec.seat_snapshot.length > 0 && (
-                        <button
-                          onClick={() => setExpandedId(isExpanded ? null : rec.id)}
-                          className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                        >
-                          {isExpanded ? '▲ Hide seating map' : '▼ View seating snapshot'}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Expanded snapshot */}
-                    {isExpanded && rec.seat_snapshot && (
-                      <div className="px-4 pb-4 border-t border-zinc-700/60">
-                        <div className="pt-3 overflow-x-auto">
-                          <SnapshotGrid snapshot={rec.seat_snapshot} layoutMeta={layoutMeta} />
-                        </div>
-                        <div className="flex gap-3 mt-3 pt-2 border-t border-zinc-700/40">
+                        {/* Counts grid */}
+                        <div className="grid grid-cols-4 gap-2">
                           {[
-                            { dot: 'bg-red-500',   label: 'Occupied' },
-                            { dot: 'bg-amber-400', label: 'Reserved' },
-                            { dot: 'bg-zinc-600',  label: 'Vacant' },
-                          ].map(({ dot, label }) => (
-                            <span key={label} className="flex items-center gap-1.5 text-zinc-600 text-xs">
-                              <span className={`w-2.5 h-2.5 rounded-sm shrink-0 ${dot}`} />
-                              {label}
-                            </span>
+                            { label: 'Occupied', value: rec.total_occupied, color: 'text-red-400' },
+                            { label: 'Reserved', value: rec.total_reserved, color: 'text-amber-400' },
+                            { label: 'Vacant',   value: rec.total_vacant,   color: 'text-emerald-400' },
+                            { label: 'Total',    value: rec.total_seats,    color: 'text-zinc-300' },
+                          ].map(({ label, value, color }) => (
+                            <div key={label} className="bg-zinc-900 rounded-lg p-2.5 text-center">
+                              <div className={`text-xl font-extrabold ${color}`}>{value}</div>
+                              <div className="text-zinc-600 text-[10px] mt-0.5">{label}</div>
+                            </div>
                           ))}
                         </div>
+
+                        {/* Seating snapshot */}
+                        {rec.seat_snapshot && rec.seat_snapshot.length > 0 ? (
+                          <div className="space-y-2">
+                            <p className="text-zinc-500 text-xs uppercase tracking-wide font-semibold">Seating map</p>
+                            <div className="bg-zinc-900 rounded-xl p-3 overflow-x-auto">
+                              <SnapshotGrid snapshot={rec.seat_snapshot} layoutMeta={layoutMeta} />
+                              <div className="flex gap-3 mt-3 pt-2.5 border-t border-zinc-800">
+                                {[
+                                  { dot: 'bg-red-500',   label: 'Occupied' },
+                                  { dot: 'bg-amber-400', label: 'Reserved' },
+                                  { dot: 'bg-zinc-700',  label: 'Vacant' },
+                                ].map(({ dot, label }) => (
+                                  <span key={label} className="flex items-center gap-1.5 text-zinc-500 text-xs">
+                                    <span className={`w-2.5 h-2.5 rounded-sm shrink-0 ${dot}`} />
+                                    {label}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-zinc-600 text-xs italic">No seating snapshot — this record was saved before snapshots were enabled.</p>
+                        )}
                       </div>
                     )}
                   </div>
