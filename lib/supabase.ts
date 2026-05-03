@@ -54,6 +54,14 @@ export interface SectionStat {
   rate: number   // 0–1 occupancy fraction
 }
 
+// Compact seat record stored inside a snapshot — just enough to reconstruct the visual
+export interface SnapshotSeat {
+  section: string
+  row: number
+  col: number
+  status: 'vacant' | 'occupied' | 'reserved'
+}
+
 // One Sunday's attendance record from the `attendance` table
 export interface AttendanceRecord {
   id: number
@@ -62,9 +70,7 @@ export interface AttendanceRecord {
   total_reserved: number        // seats marked reserved
   total_vacant: number
   total_seats: number
-  efficiency_score: number      // 0–100
-  section_breakdown: SectionStat[]
-  efficiency_notes: string[]    // human-readable recommendations
   service_note: string | null   // optional usher note e.g. "Easter Sunday"
+  seat_snapshot: SnapshotSeat[] | null  // full seating state at time of submission
   created_at: string
 }

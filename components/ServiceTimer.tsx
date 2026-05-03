@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase, SectionConfig, Seat } from '@/lib/supabase'
-import { analyzeEfficiency, countByStatus } from '@/lib/seating-analysis'
+import { countByStatus } from '@/lib/seating-analysis'
 
 // ── Schedule constants ────────────────────────────────────────────────────────
 const START_H = 11   // 11:00am ET
@@ -95,7 +95,7 @@ function fmtCountdown(mins: number, secs: number): string {
 
 // Fetches seats and checks for an existing record in parallel, then saves.
 // Returns false if a record for today already exists.
-async function autoSaveAttendance(dateStr: string, layoutMeta: SectionConfig[]): Promise<boolean> {
+async function autoSaveAttendance(dateStr: string): Promise<boolean> {
   const [{ data: existing }, { data: rawSeats }] = await Promise.all([
     supabase.from('attendance').select('id').eq('service_date', dateStr).maybeSingle(),
     supabase.from('seats').select('*'),
@@ -104,17 +104,16 @@ async function autoSaveAttendance(dateStr: string, layoutMeta: SectionConfig[]):
 
   const seats = rawSeats as Seat[]
   const { occupied, reserved, vacant } = countByStatus(seats)
-  const { score, sectionStats, notes } = analyzeEfficiency(seats, layoutMeta)
+  const snapshot = seats.map(s => ({ section: s.section, row: s.row_number, col: s.col_number, status: s.status }))
 
   await supabase.from('attendance').insert({
-    service_date:      dateStr,
-    total_occupied:    occupied,
-    total_reserved:    reserved,
-    total_vacant:      vacant,
-    total_seats:       seats.length,
-    efficiency_score:  score,
-    section_breakdown: sectionStats,
-    efficiency_notes:  ['Auto-saved at 2:00pm ET — attendance was not submitted manually.', ...notes],
+    service_date:   dateStr,
+    total_occupied: occupied,
+    total_reserved: reserved,
+    total_vacant:   vacant,
+    total_seats:    seats.length,
+    service_note:   'Auto-saved at 2:00pm ET',
+    seat_snapshot:  snapshot,
   })
   return true
 }
@@ -162,18 +161,18 @@ export default function ServiceTimer({ layoutMeta }: Props) {
 
   // ── Auto-save handler ───────────────────────────────────────────────────────
   const handleAutoSave = useCallback(async (dateStr: string) => {
-    if (firedAutoSave.current || layoutMeta.length === 0) return
+    if (firedAutoSave.current) return
     firedAutoSave.current = true
     setAutoSaveStatus('saving')
 
-    const saved = await autoSaveAttendance(dateStr, layoutMeta)
+    const saved = await autoSaveAttendance(dateStr)
     setAutoSaveStatus(saved ? 'saved' : 'skipped')
 
     if (saved) {
       setBanner({ type: 'auto-saved', message: 'Attendance auto-saved for this Sunday.' })
       sendNotification('Ignite Church', 'Attendance has been auto-saved for today\'s service.')
     }
-  }, [layoutMeta])
+  }, [])
 
   // 1-second tick — but only triggers a re-render when the displayed value changes.
   // During reminder windows seconds are shown so every tick matters; during the
